@@ -91,6 +91,7 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
 
         if ((meas_package.sensor_type_ == MeasurementPackage::RADAR) &&
             (meas_package.raw_measurements_[0]* meas_package.raw_measurements_[1] != 0)) {
+            cout << "-----------------initial state---------------" << endl;
             time_us_ = meas_package.timestamp_;
             cout << "initial time: " << time_us_ << endl;
 
@@ -101,19 +102,20 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
             x_ << cos(phi) * rho, sin(phi) * rho, 0, 0, 0;
             cout << "initial x (1st non-zero radar measurement):" << endl;
             cout << x_ << endl;
-            cout << "-----------------------------" << endl;
+            cout << "-----------------initial state---------------" << endl;
             is_initialized_ = true;
 
         }
         else if ((meas_package.sensor_type_ == MeasurementPackage::LASER) &&
                  (meas_package.raw_measurements_[0]* meas_package.raw_measurements_[1] != 0)){
             time_us_ = meas_package.timestamp_;
+            cout << "-----------------initial state---------------" << endl;
             cout << "initial time: " << time_us_ << endl;
 
             x_ << meas_package.raw_measurements_[0], meas_package.raw_measurements_[1], 0, 0, 0;
             cout << "initial x (1st non-zero laser measurement):" << endl;
             cout << x_ << endl;
-            cout << "-----------------------------" << endl;
+            cout << "-----------------initial state---------------" << endl;
             is_initialized_ = true;
         }
         return;
@@ -131,7 +133,7 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
  * measurement and this one.
  */
 void UKF::Prediction(double delta_t) {
-    cout << "prediction start:" << endl;
+    cout << "------------prediction start---------------" << endl;
 
     /**
      * generate augmented sigma points
@@ -247,8 +249,7 @@ void UKF::Prediction(double delta_t) {
     cout << x_ << endl;
     cout << "p_pred:" << endl;
     cout << P_ << endl;
-    cout << "prediction done" << endl;
-    cout << "----------------------------------" << endl;
+    cout << "----------------prediction done----------------" << endl;
 
 }
 
