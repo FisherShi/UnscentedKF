@@ -54,7 +54,7 @@ UKF::UKF() {
     std_yawdd_ = 30;
 
     // initial weights
-    weights_ = VectorXd(5);
+    weights_ = VectorXd(2*n_aug_+1);
 
     // Laser measurement noise standard deviation position1 in m
     std_laspx_ = 0.15;
@@ -123,7 +123,6 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
     time_us_ = meas_package.timestamp_;
     Prediction(dt);
 
-
 }
 
 /**
@@ -132,10 +131,12 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
  * measurement and this one.
  */
 void UKF::Prediction(double delta_t) {
+    cout << "prediction start:" << endl;
 
     /**
      * generate augmented sigma points
     */
+
     // create augmented mean vector (7)
     VectorXd x_aug = VectorXd(n_aug_);
     //create augmented state covariance (7*7)
@@ -211,9 +212,43 @@ void UKF::Prediction(double delta_t) {
         Xsig_pred_(3,i) = yaw_pred;
         Xsig_pred_(4,i) = yawd_pred;
     }
-    cout << "Xsig_pred:" << endl;
-    cout << Xsig_pred_ << endl;
 
+    /**
+     * predict mean & covariance
+    */
+    // set weights
+    double weight_0 = lambda_/(lambda_+n_aug_);
+    weights_(0) = weight_0;
+    for (int i=1; i<2*n_aug_+1; i++) {  //2n+1 weights
+        double weight = 0.5/(n_aug_+lambda_);
+        weights_(i) = weight;
+    }
+
+    //predicted state mean
+    x_.fill(0.0);
+    for (int i = 0; i < 2 * n_aug_ + 1; i++) {  //iterate over sigma points
+        x_ = x_ + weights_(i) * Xsig_pred_.col(i);
+    }
+
+    //predicted state covariance matrix
+    P_.fill(0.0);
+    for (int i = 0; i < 2 * n_aug_ + 1; i++) {  //iterate over sigma points
+
+        // state difference
+        VectorXd x_diff = Xsig_pred_.col(i) - x_;
+        //angle normalization
+        while (x_diff(3)> M_PI) x_diff(3)-=2.*M_PI;
+        while (x_diff(3)<-M_PI) x_diff(3)+=2.*M_PI;
+
+        P_ = P_ + weights_(i) * x_diff * x_diff.transpose() ;
+
+    }
+    cout << "x_pred:" << endl;
+    cout << x_ << endl;
+    cout << "p_pred:" << endl;
+    cout << P_ << endl;
+    cout << "prediction done" << endl;
+    cout << "----------------------------------" << endl;
 
 }
 
