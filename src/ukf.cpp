@@ -161,14 +161,58 @@ void UKF::Prediction(double delta_t) {
     Xsig_aug.col(0)  = x_aug;
     for (int i = 0; i< n_aug_; i++)
     {
-        Xsig_aug.col(i+1)       = x_aug + sqrt(lambda_+n_aug_) * L.col(i);
+        Xsig_aug.col(i+1)        = x_aug + sqrt(lambda_+n_aug_) * L.col(i);
         Xsig_aug.col(i+1+n_aug_) = x_aug - sqrt(lambda_+n_aug_) * L.col(i);
     }
-    cout << "Xsig_aug:" << endl;
-    cout << Xsig_aug << endl;
+
     /**
      * predict sigma points
     */
+    for (int i = 0; i< 2*n_aug_+1; i++)
+    {
+        //extract values for better readability
+        double p_x = Xsig_aug(0,i);
+        double p_y = Xsig_aug(1,i);
+        double v = Xsig_aug(2,i);
+        double yaw = Xsig_aug(3,i);
+        double yawd = Xsig_aug(4,i);
+        double nu_a = Xsig_aug(5,i);
+        double nu_yawdd = Xsig_aug(6,i);
+
+        //predicted state values
+        double px_pred, py_pred;
+
+        //avoid division by zero
+        if (fabs(yawd) > 0.001) {
+            px_pred = p_x + v/yawd * ( sin (yaw + yawd*delta_t) - sin(yaw));
+            py_pred = p_y + v/yawd * ( cos(yaw) - cos(yaw+yawd*delta_t) );
+        }
+        else {
+            px_pred = p_x + v*delta_t*cos(yaw);
+            py_pred = p_y + v*delta_t*sin(yaw);
+        }
+
+        double v_pred = v;
+        double yaw_pred = yaw + yawd*delta_t;
+        double yawd_pred = yawd;
+
+        //add noise
+        px_pred = px_pred + 0.5*nu_a*delta_t*delta_t * cos(yaw);
+        py_pred = py_pred + 0.5*nu_a*delta_t*delta_t * sin(yaw);
+        v_pred = v_pred + nu_a*delta_t;
+
+        yaw_pred = yaw_pred + 0.5*nu_yawdd*delta_t*delta_t;
+        yawd_pred = yawd_pred + nu_yawdd*delta_t;
+
+        //write predicted sigma point into right column
+        Xsig_pred_(0,i) = px_pred;
+        Xsig_pred_(1,i) = py_pred;
+        Xsig_pred_(2,i) = v_pred;
+        Xsig_pred_(3,i) = yaw_pred;
+        Xsig_pred_(4,i) = yawd_pred;
+    }
+    cout << "Xsig_pred:" << endl;
+    cout << Xsig_pred_ << endl;
 
 
 }
