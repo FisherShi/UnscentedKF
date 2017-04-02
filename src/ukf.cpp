@@ -79,12 +79,41 @@ UKF::~UKF() {}
  * either radar or laser.
  */
 void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
-    /**
-    TODO:
 
-    Complete this function! Make sure you switch between lidar and radar
-    measurements.
-    */
+    while (!is_initialized_){
+
+    // first measurement
+    x_ << 0,0,0,0,0;
+    cout << "searching for non-zero measurement... " << endl;
+
+    if ((meas_package.sensor_type_ == MeasurementPackage::RADAR) &&
+        (meas_package.raw_measurements_[0]* meas_package.raw_measurements_[1] != 0)) {
+        time_us_ = meas_package.timestamp_;
+        cout << "initial time: " << time_us_ << endl;
+
+        double rho = meas_package.raw_measurements_[0];
+        double phi = meas_package.raw_measurements_[1];
+        double rhod = meas_package.raw_measurements_[2];
+
+        x_ << cos(phi) * rho, sin(phi) * rho, 0, 0, 0;
+        cout << "initial x (1st non-zero radar measurement):" << endl;
+        cout << x_ << endl;
+        is_initialized_ = true;
+
+    }
+    else if ((meas_package.sensor_type_ == MeasurementPackage::LASER) &&
+             (meas_package.raw_measurements_[0]* meas_package.raw_measurements_[1] != 0)){
+        time_us_ = meas_package.timestamp_;
+        cout << "initial time: " << time_us_ << endl;
+
+        x_ << meas_package.raw_measurements_[0], meas_package.raw_measurements_[1], 0, 0, 0;
+        cout << "initial x (1st non-zero laser measurement):" << endl;
+        cout << x_ << endl;
+        is_initialized_ = true;
+    }
+    cout << "-----------------------------" << endl;
+    return;
+}
 }
 
 /**
