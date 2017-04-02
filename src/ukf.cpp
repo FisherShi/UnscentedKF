@@ -23,20 +23,26 @@ UKF::UKF() {
     // initial time stamp
     time_us_ = 0;
 
-    // initial state vector
-    x_ = VectorXd(5);
-
-    // initial covariance matrix
-    P_ = MatrixXd(5, 5);
-
     // state dimension
     n_x_ = 5;
 
     // augmented state dimension
     n_aug_ = 7;
 
+    // initial state vector
+    x_ = VectorXd(n_x_);
+    x_ << 0,0,0,0,0;
+
+    // initial covariance matrix
+    P_ = MatrixXd(n_x_, n_x_);
+    P_ <<   0.0043,  -0.0013, 0.0030, -0.0022, -0.0020,
+            -0.0013, 0.0077,  0.0011, 0.0071,  0.0060,
+            0.0030,  0.0011,  0.0054, 0.0007,  0.0008,
+            -0.0022, 0.0071,  0.0007, 0.0098,  0.0100,
+            -0.0020, 0.0060,  0.0008, 0.0100,  0.0123;
+
     // initial predicted sigma points
-    Xsig_pred_ = MatrixXd(7,15);
+    Xsig_pred_ = MatrixXd(n_x_, 2*n_aug_+1);
 
     // lambda
     lambda_ = 3 - n_x_;
@@ -81,39 +87,44 @@ UKF::~UKF() {}
 void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
 
     while (!is_initialized_){
+        cout << "searching for non-zero measurement... " << endl;
 
-    // first measurement
-    x_ << 0,0,0,0,0;
-    cout << "searching for non-zero measurement... " << endl;
+        if ((meas_package.sensor_type_ == MeasurementPackage::RADAR) &&
+            (meas_package.raw_measurements_[0]* meas_package.raw_measurements_[1] != 0)) {
+            time_us_ = meas_package.timestamp_;
+            cout << "initial time: " << time_us_ << endl;
 
-    if ((meas_package.sensor_type_ == MeasurementPackage::RADAR) &&
-        (meas_package.raw_measurements_[0]* meas_package.raw_measurements_[1] != 0)) {
-        time_us_ = meas_package.timestamp_;
-        cout << "initial time: " << time_us_ << endl;
+            double rho = meas_package.raw_measurements_[0];
+            double phi = meas_package.raw_measurements_[1];
+            double rhod = meas_package.raw_measurements_[2];
 
-        double rho = meas_package.raw_measurements_[0];
-        double phi = meas_package.raw_measurements_[1];
-        double rhod = meas_package.raw_measurements_[2];
+            x_ << cos(phi) * rho, sin(phi) * rho, 0, 0, 0;
+            cout << "initial x (1st non-zero radar measurement):" << endl;
+            cout << x_ << endl;
+            cout << "-----------------------------" << endl;
+            is_initialized_ = true;
 
-        x_ << cos(phi) * rho, sin(phi) * rho, 0, 0, 0;
-        cout << "initial x (1st non-zero radar measurement):" << endl;
-        cout << x_ << endl;
-        is_initialized_ = true;
+        }
+        else if ((meas_package.sensor_type_ == MeasurementPackage::LASER) &&
+                 (meas_package.raw_measurements_[0]* meas_package.raw_measurements_[1] != 0)){
+            time_us_ = meas_package.timestamp_;
+            cout << "initial time: " << time_us_ << endl;
 
+            x_ << meas_package.raw_measurements_[0], meas_package.raw_measurements_[1], 0, 0, 0;
+            cout << "initial x (1st non-zero laser measurement):" << endl;
+            cout << x_ << endl;
+            cout << "-----------------------------" << endl;
+            is_initialized_ = true;
+        }
+        return;
     }
-    else if ((meas_package.sensor_type_ == MeasurementPackage::LASER) &&
-             (meas_package.raw_measurements_[0]* meas_package.raw_measurements_[1] != 0)){
-        time_us_ = meas_package.timestamp_;
-        cout << "initial time: " << time_us_ << endl;
+    double dt = (double)(meas_package.timestamp_-time_us_)/1000000.0;
+    cout << "delta t: " << dt << endl;
+    time_us_ = meas_package.timestamp_;
+    Prediction(dt);
+    cout << "Xsig_pred:" << endl;
+    cout << Xsig_pred_ << endl;
 
-        x_ << meas_package.raw_measurements_[0], meas_package.raw_measurements_[1], 0, 0, 0;
-        cout << "initial x (1st non-zero laser measurement):" << endl;
-        cout << x_ << endl;
-        is_initialized_ = true;
-    }
-    cout << "-----------------------------" << endl;
-    return;
-}
 }
 
 /**
@@ -122,12 +133,24 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
  * measurement and this one.
  */
 void UKF::Prediction(double delta_t) {
-    /**
-    TODO:
 
-    Complete this function! Estimate the object's location. Modify the state
-    vector, x_. Predict sigma points, the state, and the state covariance matrix.
+    /**
+     * generate sigma points
     */
+    Xsig_pred_.fill(0);
+    //calculate square root of P
+    MatrixXd A = P_.llt().matrixL();
+    //set first column of sigma point matrix
+    Xsig_pred_.col(0)  = x_;
+    for (int i = 0; i < n_x_; i++)
+    {
+        Xsig_pred_.col(i+1) = x_ + sqrt(lambda_+n_x_) * A.col(i);
+        Xsig_pred_.col(i+1+n_x_) = x_ - sqrt(lambda_+n_x_) * A.col(i);
+    }
+
+
+
+
 }
 
 /**
