@@ -48,10 +48,10 @@ UKF::UKF() {
     lambda_ = 3 - n_x_;
 
     // Process noise standard deviation longitudinal acceleration in m/s^2
-    std_a_ = 0.1;
+    std_a_ = 0.6;
 
     // Process noise standard deviation yaw acceleration in rad/s^2
-    std_yawdd_ = 2;
+    std_yawdd_ = 0.8;
 
     // initial weights
     weights_ = VectorXd(2*n_aug_+1);
@@ -97,7 +97,7 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
 
             double rho = meas_package.raw_measurements_[0];
             double phi = meas_package.raw_measurements_[1];
-            double rhod = meas_package.raw_measurements_[2];
+            //double rhod = meas_package.raw_measurements_[2];
 
             x_ << cos(phi) * rho, sin(phi) * rho, 0, 0, 0;
             cout << "initial x (1st non-zero radar measurement):" << endl;
