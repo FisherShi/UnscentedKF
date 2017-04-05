@@ -198,7 +198,6 @@ int main(int argc, char* argv[]) {
             out_file_ << ukf.NIS_radar_ << "\n";
         }
 
-
         // convert ukf x vector to cartesian to compare to ground truth
         VectorXd ukf_x_cartesian_ = VectorXd(4);
 

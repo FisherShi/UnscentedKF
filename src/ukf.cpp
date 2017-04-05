@@ -31,15 +31,15 @@ UKF::UKF() {
 
     // initial state vector
     x_ = VectorXd(n_x_);
-    x_ << 0,0,0,0,0;
+    x_ << 1,1,1,1,1;
 
     // initial covariance matrix
     P_ = MatrixXd(n_x_, n_x_);
-    P_ <<   0.0043,  -0.0013, 0.0030, -0.0022, -0.0020,
-            -0.0013, 0.0077,  0.0011, 0.0071,  0.0060,
-            0.0030,  0.0011,  0.0054, 0.0007,  0.0008,
-            -0.0022, 0.0071,  0.0007, 0.0098,  0.0100,
-            -0.0020, 0.0060,  0.0008, 0.0100,  0.0123;
+    P_ << 1, 0, 0, 0, 0,
+          0, 1, 0, 0, 0,
+          0, 0, 1, 0, 0,
+          0, 0, 0, 1, 0,
+          0, 0, 0, 0, 1;
 
     // initial predicted sigma points
     Xsig_pred_ = MatrixXd(n_x_, 2*n_aug_+1);
@@ -48,10 +48,10 @@ UKF::UKF() {
     lambda_ = 3 - n_x_;
 
     // Process noise standard deviation longitudinal acceleration in m/s^2
-    std_a_ = 30;
+    std_a_ = 0.8;
 
     // Process noise standard deviation yaw acceleration in rad/s^2
-    std_yawdd_ = 30;
+    std_yawdd_ = 0.6;
 
     // initial weights
     weights_ = VectorXd(2*n_aug_+1);
@@ -102,7 +102,7 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
             x_ << cos(phi) * rho, sin(phi) * rho, 0, 0, 0;
             cout << "initial x (1st non-zero radar measurement):" << endl;
             cout << x_ << endl;
-            cout << "-----------------initial state---------------" << endl;
+            cout << "----------------------------------------------" << endl;
             is_initialized_ = true;
 
         }
@@ -115,7 +115,7 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
             x_ << meas_package.raw_measurements_[0], meas_package.raw_measurements_[1], 0, 0, 0;
             cout << "initial x (1st non-zero laser measurement):" << endl;
             cout << x_ << endl;
-            cout << "-----------------initial state---------------" << endl;
+            cout << "---------------------------------------------" << endl;
             is_initialized_ = true;
         }
         return;
@@ -136,8 +136,6 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
         cout << "-----------updated x--------------------" << endl;
         cout << x_ << endl;
     }
-
-
 }
 
 /**
@@ -450,5 +448,4 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
     //update state mean and covariance matrix
     x_ = x_ + K * z_diff;
     P_ = P_ - K*S*K.transpose();
-
 }
