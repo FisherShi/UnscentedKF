@@ -48,10 +48,10 @@ UKF::UKF() {
     lambda_ = 3 - n_x_;
 
     // Process noise standard deviation longitudinal acceleration in m/s^2
-    std_a_ = 0.1;
+    std_a_ = 0.8;
 
     // Process noise standard deviation yaw acceleration in rad/s^2
-    std_yawdd_ = 0.5;
+    std_yawdd_ = 0.6;
 
     // initial weights
     weights_ = VectorXd(2*n_aug_+1);
