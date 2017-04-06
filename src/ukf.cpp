@@ -31,15 +31,15 @@ UKF::UKF() {
 
     // initial state vector
     x_ = VectorXd(n_x_);
-    x_ << 1,1,1,1,1;
+    x_ << 0,0,0,0,0;
 
     // initial covariance matrix
     P_ = MatrixXd(n_x_, n_x_);
-    P_ << 0.1, 0, 0, 0, 0,
-          0, 0.1, 0, 0, 0,
-          0, 0, 0.1, 0, 0,
-          0, 0, 0, 0.1, 0,
-          0, 0, 0, 0, 0.1;
+    P_ <<   0.01,   0,    0,   0,   0,
+            0,    0.01,    0,    0,    0,
+            0,    0,    0.01,    0,    0,
+            0,    0,    0,    0.01,    0,
+            0,    0,    0,    0,    0.01;
 
     // initial predicted sigma points
     Xsig_pred_ = MatrixXd(n_x_, 2*n_aug_+1);
@@ -48,10 +48,10 @@ UKF::UKF() {
     lambda_ = 3 - n_x_;
 
     // Process noise standard deviation longitudinal acceleration in m/s^2
-    std_a_ = 0.8;
+    std_a_ = 0.5;
 
     // Process noise standard deviation yaw acceleration in rad/s^2
-    std_yawdd_ = 0.6;
+    std_yawdd_ = 0.25;
 
     // initial weights
     weights_ = VectorXd(2*n_aug_+1);
@@ -97,7 +97,6 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
 
             double rho = meas_package.raw_measurements_[0];
             double phi = meas_package.raw_measurements_[1];
-            //double rhod = meas_package.raw_measurements_[2];
 
             x_ << cos(phi) * rho, sin(phi) * rho, 0, 0, 0;
             cout << "initial x (1st non-zero radar measurement):" << endl;
@@ -109,7 +108,7 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
         else if ((meas_package.sensor_type_ == MeasurementPackage::LASER) &&
                  (meas_package.raw_measurements_[0]* meas_package.raw_measurements_[1] != 0)){
             time_us_ = meas_package.timestamp_;
-            cout << "-----------------initial state---------------" << endl;
+            cout << "----------------initial state----------------" << endl;
             cout << "initial time: " << time_us_ << endl;
 
             x_ << meas_package.raw_measurements_[0], meas_package.raw_measurements_[1], 0, 0, 0;
@@ -122,6 +121,15 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
     }
     double dt = (double)(meas_package.timestamp_-time_us_)/1000000.0;
     cout << "delta t: " << dt << endl;
+
+    //while (dt > 0.5)
+    //{
+    //   cout << "0.05 sedond prediction:" << endl;
+    //    cout << dt << endl;
+    //   Prediction(0.1);
+    //    dt -= 0.1;
+    //}
+
     time_us_ = meas_package.timestamp_;
     Prediction(dt);
     if (meas_package.sensor_type_ == MeasurementPackage::RADAR){
@@ -254,14 +262,10 @@ void UKF::Prediction(double delta_t) {
         while (x_diff(3)<-M_PI) x_diff(3)+=2.*M_PI;
 
         P_ = P_ + weights_(i) * x_diff * x_diff.transpose() ;
-
     }
     cout << "x_pred:" << endl;
     cout << x_ << endl;
-    cout << "p_pred:" << endl;
-    cout << P_ << endl;
     cout << "----------------prediction done----------------" << endl;
-
 }
 
 /**
